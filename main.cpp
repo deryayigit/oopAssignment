@@ -2,139 +2,125 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <vector>
 #include <iomanip>
 using namespace std;
-#define N 125
 
 class Student {
-    private:
-        string* name;
-        string* studentNo;
-        float* midterm;
-        float* secondExam;
-        float* assignment;
-        float* final;
-        int* attendance;
-        float* avrg;
-    public:
-        Student();
-        ~Student();
-        void readFromCSV(const string& filename);
-        void average();
-        void print(int,string);
+private:
+    vector<string> name;
+    vector<string> studentNo;
+    vector<float> midterm;
+    vector<float> secondExam;
+    vector<float> assignment;
+    vector<float> finalExam;
+    vector<int> attendance;
+    vector<float> averageScores;
+
+public:
+    void readFromCSV(const string& filename);
+    void calculateAverage();
+    void print(int filter = -1, const string& outputFile = "");
 };
 
-Student :: Student(){
-    name = new string[N];
-    studentNo = new string[N];
-    midterm = new float[N];
-    secondExam = new float[N];
-    assignment = new float[N];
-    final = new float[N];
-    attendance = new int[N];
-    avrg = new float[N];
-    
-}
-
-Student :: ~Student() {
-    delete[] name;
-    delete[] studentNo;
-    delete[] midterm;
-    delete[] secondExam;
-    delete[] assignment;
-    delete[] final;
-    delete[] attendance;
-    delete[] avrg;
-}
-
-void Student :: readFromCSV(const string& filename){
+void Student::readFromCSV(const string& filename) {
     ifstream file(filename);
     if (!file.is_open()) {
         cerr << "Error: Could not open file " << filename << endl;
         return;
     }
     string line;
-    getline(file, line); //başlık satırını atla
+    getline(file, line); // Skip header line
 
-    int i=0;
-    while(getline(file,line) && i<N){
+    while (getline(file, line)) {
         stringstream ss(line);
         string temp;
 
-        getline(ss, name[i], ',');
-        getline(ss, studentNo[i], ',');
+        string studentName, studentNumber;
+        float midtermScore, secondExamScore, assignmentScore, finalScore;
+        int attendanceScore;
+
+        getline(ss, studentName, ',');
+        getline(ss, studentNumber, ',');
         getline(ss, temp, ',');
-        midterm[i]=stof(temp);
+        midtermScore = stof(temp);
         getline(ss, temp, ',');
-        secondExam[i]=stof(temp); 
+        secondExamScore = stof(temp);
         getline(ss, temp, ',');
-        assignment[i]=stof(temp);
+        assignmentScore = stof(temp);
         getline(ss, temp, ',');
-        final[i]=stof(temp);
+        finalScore = stof(temp);
         getline(ss, temp, '\n');
-        attendance[i]=stoi(temp);
+        attendanceScore = stoi(temp);
 
-        i++;
+        // Add the student data to vectors
+        name.push_back(studentName);
+        studentNo.push_back(studentNumber);
+        midterm.push_back(midtermScore);
+        secondExam.push_back(secondExamScore);
+        assignment.push_back(assignmentScore);
+        finalExam.push_back(finalScore);
+        attendance.push_back(attendanceScore);
     }
+
     file.close();
-
 }
 
-void Student :: average(){
-    int i=0;
-    while(i<N){
-        avrg[i] = midterm[i]*0.2 + secondExam[i]*0.2 + assignment[i]*0.2 + final[i]*0.4; 
-        i++;
-        }
+void Student::calculateAverage() {
+    for (size_t i = 0; i < name.size(); ++i) {
+        averageScores.push_back(midterm[i] * 0.2f + secondExam[i] * 0.2f + assignment[i] * 0.2f + finalExam[i] * 0.4f);
+    }
 }
 
-void Student :: print(int a=-1,string fl=""){
+void Student::print(int filter, const string& outputFile) {
     ofstream file;
-    if (!fl.empty()) {
-        file.open(fl); 
+    if (!outputFile.empty()) {
+        file.open(outputFile);
         if (!file.is_open()) {
             cerr << "Error writing output file!" << endl;
             return;
         }
     }
 
-    ostream& output = fl.empty() ? cout : file;
+    ostream& output = outputFile.empty() ? cout : file;
 
-    output<<left<<setw(25)<<"Öğrenci Adı"<<right<<setw(10)<<"Numara"<<right<<setw(10)<<"Ortalama"<<endl;
-    output<<string(45, '-')<<endl;
+    output << left << setw(25) << "Ogrenci Adi" << right << setw(10) << "Numara" << right << setw(10) << "Ortalama" << endl;
+    output << string(45, '-') << endl;
 
-    int i=0;
-    if(a==0){
-        while(i<N){
-            if(avrg[i]<50){
-                output<<left<<setw(25)<<name[i]<<right<<setw(10)<<studentNo[i]<<right<<setw(10)<<avrg[i]<<endl;
-            }
-            i++;
+    for (size_t i = 0; i < name.size(); ++i) {
+        bool print = false;
+        if (filter == 0 && averageScores[i] >= 50) print = true;
+        if (filter == 1 && averageScores[i] < 50) print = true;
+        if (filter == -1) print = true;
+
+        if (print) {
+            output << left << setw(25) << name[i] << right << setw(10) << studentNo[i] << right << setw(10) << averageScores[i] << endl;
         }
     }
-    if(a==1){
-        while(i<N){
-            if(avrg[i]>=50){
-                output<<left<<setw(25)<<name[i]<<right<<setw(10)<<studentNo[i]<<right<<setw(10)<<avrg[i]<<endl;
-            }
-            i++;
-        }  
+
+    if (!outputFile.empty()) {
+        file.close();
     }
-    else{
-        while(i<N){
-            output<<left<<setw(25)<<name[i]<<right<<setw(10)<<studentNo[i]<<right<<setw(10)<<avrg[i]<<endl;
-            i++;
-        }
-        
-    }
-    file.close();
 }
 
-int main(){
+int main() {
     Student student;
-    int a;
-    student.readFromCSV("input.csv");
-    student.average();
-    student.print(1,"");
+    string filename;
+    cout << "Enter CSV filename: ";
+    cin >> filename;
+    student.readFromCSV(filename);
+    student.calculateAverage();
 
+    int filter;
+    cout << "Enter filter (0: Pass, 1: Fail, -1: All): ";
+    cin >> filter;
+
+    string outputFile;
+    cout << "Enter output file (leave empty for console): ";
+    cin.ignore();
+    getline(cin, outputFile);
+
+    student.print(filter, outputFile);
+
+    return 0;
 }
