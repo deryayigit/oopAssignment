@@ -4,6 +4,7 @@
 #include <string>
 #include <iomanip>
 using namespace std;
+
 #define N 125
 
 class Student {
@@ -112,7 +113,7 @@ void Student :: print(int a=-1,string fl=""){
             i++;
         }
     }
-    if(a==1){
+   else if(a==1){
         while(i<N){
             if(avrg[i]>=50){
                 output<<left<<setw(25)<<name[i]<<right<<setw(10)<<studentNo[i]<<right<<setw(10)<<avrg[i]<<endl;
@@ -127,14 +128,19 @@ void Student :: print(int a=-1,string fl=""){
         }
         
     }
-    file.close();
+   if(file.is_open()){
+       file.close();
+   }
 }
 
 int main(){
     Student student;
     int a;
+    cout << "Geçen öğrenciler için 1, kalanlar için 0 girin: ";
+    cin >> a;
+    
     student.readFromCSV("input.csv");
     student.average();
-    student.print(1,"");
+    student.print(a,"");
 
 }
